@@ -13,7 +13,7 @@
                 <span class="title">Dashboard</span>
             </a>
         </li>
-        @canany(['roles.view', 'permissions.view', 'users.view'])
+        @canany(['roles.view', 'permissions.view', 'users.view', 'countries.view', 'states.view', 'cities.view', 'postal-codes.view', 'areas.view', 'warehouses.view', 'courier-partners.view', 'shipping-methods.view', 'shipping-zones.view', 'shipping-packages.view', 'shipping-classes.view', 'shipping-settings.view'])
         <li class="heading">
             <h3 class="uppercase">Masters</h3>
         </li>
@@ -45,40 +45,52 @@
                 <span class="title">Variant Values</span>
             </a>
         </li> -->
-        <li class="nav-item  ">
+        @canany(['countries.view', 'states.view', 'cities.view', 'postal-codes.view', 'areas.view'])
+        <li class="nav-item {{ request()->routeIs('admin.countries.*', 'admin.states.*', 'admin.cities.*', 'admin.postal-codes.*', 'admin.areas.*') ? 'active open' : '' }}">
             <a href="javascript:;" class="nav-link nav-toggle">
                 <i class="icon-pointer"></i>
                 <span class="title">Location Management</span>
                 <span class="arrow"></span>
             </a>
             <ul class="sub-menu">
-                <li class="nav-item  ">
-                    <a href="" class="nav-link ">
-                        <span class="title">Country</span>
+                @can('countries.view')
+                <li class="nav-item {{ request()->routeIs('admin.countries.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.countries.index') }}" class="nav-link ">
+                        <span class="title">Countries</span>
                     </a>
                 </li>
-                <li class="nav-item  ">
-                    <a href="" class="nav-link ">
+                @endcan
+                @can('states.view')
+                <li class="nav-item {{ request()->routeIs('admin.states.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.states.index') }}" class="nav-link ">
                         <span class="title">States</span>
                     </a>
                 </li>
-                <li class="nav-item  ">
-                    <a href="" class="nav-link ">
+                @endcan
+                @can('cities.view')
+                <li class="nav-item {{ request()->routeIs('admin.cities.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.cities.index') }}" class="nav-link ">
                         <span class="title">Cities</span>
                     </a>
                 </li>
-                <li class="nav-item  ">
-                    <a href="" class="nav-link ">
+                @endcan
+                @can('postal-codes.view')
+                <li class="nav-item {{ request()->routeIs('admin.postal-codes.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.postal-codes.index') }}" class="nav-link ">
                         <span class="title">Postal Codes</span>
                     </a>
                 </li>
-                <li class="nav-item  ">
-                    <a href="" class="nav-link ">
+                @endcan
+                @can('areas.view')
+                <li class="nav-item {{ request()->routeIs('admin.areas.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.areas.index') }}" class="nav-link ">
                         <span class="title">Areas</span>
                     </a>
                 </li>
+                @endcan
             </ul>
         </li>
+        @endcanany
         <li class="nav-item  {{ request()->routeIs('admin.variant-type.*', 'admin.variant-values.*') ? 'active' : '' }}">
             <a href="javascript:;" class="nav-link nav-toggle">
                 <i class="icon-vector"></i>
@@ -98,7 +110,80 @@
                 </li>
             </ul>
         </li>
+        @canany(['warehouses.view', 'courier-partners.view', 'shipping-methods.view', 'shipping-zones.view', 'shipping-packages.view', 'shipping-classes.view', 'shipping-settings.view'])
+        <li class="nav-item {{ request()->routeIs('admin.warehouses.*', 'admin.courier-partners.*', 'admin.shipping-methods.*', 'admin.shipping-zones.*', 'admin.shipping-packages.*', 'admin.shipping-classes.*', 'admin.shipping-settings.*') ? 'active open' : '' }}">
+            <a href="javascript:;" class="nav-link nav-toggle">
+                <i class="icon-plane"></i>
+                <span class="title">Shipping</span>
+                <span class="arrow"></span>
+            </a>
+            <ul class="sub-menu">
+                <small style="padding: 9px 14px 9px 30px; color: #999;">SETUP</small>
+                @can('warehouses.view')
+                <li class="nav-item {{ request()->routeIs('admin.warehouses.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.warehouses.index') }}" class="nav-link ">
+                        <span class="title">Warehouses</span>
+                    </a>
+                </li>
+                @endcan
+                @can('courier-partners.view')
+                <li class="nav-item {{ request()->routeIs('admin.courier-partners.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.courier-partners.index') }}" class="nav-link ">
+                        <span class="title">Courier partners</span>
+                    </a>
+                </li>
+                @endcan
+                @can('shipping-methods.view')
+                <li class="nav-item {{ request()->routeIs('admin.shipping-methods.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.shipping-methods.index') }}" class="nav-link ">
+                        <span class="title">Shipping methods</span>
+                    </a>
+                </li>
+                @endcan
+                @can('shipping-zones.view')
+                <li class="nav-item {{ request()->routeIs('admin.shipping-zones.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.shipping-zones.index') }}" class="nav-link ">
+                        <span class="title">Shipping zones</span>
+                    </a>
+                </li>
+                @endcan
+                @can('shipping-packages.view')
+                <li class="nav-item {{ request()->routeIs('admin.shipping-packages.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.shipping-packages.index') }}" class="nav-link ">
+                        <span class="title">Packages</span>
+                    </a>
+                </li>
+                @endcan
+                @can('shipping-classes.view')
+                <li class="nav-item {{ request()->routeIs('admin.shipping-classes.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.shipping-classes.index') }}" class="nav-link ">
+                        <span class="title">Shipping classes</span>
+                    </a>
+                </li>
+                @endcan
+                <small style="padding: 9px 14px 9px 30px; color: #999;">RATES & COVERAGE</small>
+                <li class="nav-item  ">
+                    <a href="" class="nav-link ">
+                        <span class="title">Pincode serviceability</span>
+                    </a>
+                </li>
+                <li class="nav-item  ">
+                    <a href="" class="nav-link ">
+                        <span class="title">Shipping rates</span>
+                    </a>
+                </li>
+                <small style="padding: 9px 14px 9px 30px; color: #999;">CONFIG</small>
+                @can('shipping-settings.view')
+                <li class="nav-item {{ request()->routeIs('admin.shipping-settings.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.shipping-settings.edit') }}" class="nav-link ">
+                        <span class="title">Shipping settings</span>
+                    </a>
+                </li>
+                @endcan
+            </ul>
+        </li>
         @endcanany
+        @endcanany 
         @can('categories.view')
         <li class="nav-item  {{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
             <a href="{{ route('admin.categories.index') }}" class="nav-link nav-toggle">

@@ -49,6 +49,19 @@ class City extends Model
         return $this->hasMany(PostalCode::class);
     }
 
+    public function areas(): HasMany
+    {
+        return $this->hasMany(Area::class);
+    }
+
+    /**
+     * Label used in searchable dropdowns, e.g. "Jaipur (Rajasthan)".
+     */
+    public function selectLabel(): string
+    {
+        return "{$this->city_name} ({$this->state->state_name})";
+    }
+
     public function scopeEnabled($query)
     {
         return $query->where('status', self::STATUS_ENABLED);

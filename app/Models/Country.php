@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Country extends Model
 {
@@ -23,14 +24,18 @@ class Country extends Model
     /**
      * Status constants.
      */
-
     public const STATUS_ENABLED = 707;
 
     public const STATUS_DISABLED = 505;
+
+    public function states(): HasMany
+    {
+        return $this->hasMany(State::class);
+    }
+
     /**
      * Scope for enabled countries.
      */
-
     public function scopeEnabled($query)
     {
         return $query->where('status', self::STATUS_ENABLED);
@@ -39,7 +44,6 @@ class Country extends Model
     /**
      * Scope for disabled countries.
      */
-
     public function scopeDisabled($query)
     {
         return $query->where('status', self::STATUS_DISABLED);

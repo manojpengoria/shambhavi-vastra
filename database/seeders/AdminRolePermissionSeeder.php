@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class AdminRolePermissionSeeder extends Seeder
@@ -21,47 +20,95 @@ class AdminRolePermissionSeeder extends Seeder
 
         $permissions = [
             // Dashboard
-            'dashboard.view',
-            // Products
-            'products.view',
-            'products.create',
-            'products.edit',
-            'products.delete',
-            // Categories
-            'categories.view',
-            'categories.create',
-            'categories.edit',
-            'categories.delete',
-            // Orders
-            'orders.view',
-            'orders.create',
-            'orders.edit',
-            'orders.cancel',
-            // Customers
-            'customers.view',
-            'customers.create',
-            'customers.edit',
-            'customers.delete',
-            // Inventory
-            'inventory.view',
-            'inventory.edit',
-            // Reports
-            'reports.view',
-            'reports.export',
-            // Admin Users
-            'users.view',
-            'users.create',
-            'users.edit',
-            'users.delete',
-            // Roles
-            'roles.view',
-            'roles.create',
-            'roles.edit',
-            'roles.delete',
-            'roles.assign',
-            // Settings
-            'settings.view',
-            'settings.edit',
+            // 'dashboard.view',
+            // // Products
+            // 'products.view',
+            // 'products.create',
+            // 'products.edit',
+            // 'products.delete',
+            // // Categories
+            // 'categories.view',
+            // 'categories.create',
+            // 'categories.edit',
+            // 'categories.delete',
+            // // Orders
+            // 'orders.view',
+            // 'orders.create',
+            // 'orders.edit',
+            // 'orders.cancel',
+            // // Customers
+            // 'customers.view',
+            // 'customers.create',
+            // 'customers.edit',
+            // 'customers.delete',
+            // // Inventory
+            // 'inventory.view',
+            // 'inventory.edit',
+            // // Reports
+            // 'reports.view',
+            // 'reports.export',
+            // // Admin Users
+            // 'users.view',
+            // 'users.create',
+            // 'users.edit',
+            // 'users.delete',
+            // // Roles
+            // 'roles.view',
+            // 'roles.create',
+            // 'roles.edit',
+            // 'roles.delete',
+            // 'roles.assign',
+            // // Settings
+            // 'settings.view',
+            // 'settings.edit',
+            // Location Management
+            // 'countries.view',
+            // 'countries.create',
+            // 'countries.edit',
+            // 'countries.delete',
+            // 'states.view',
+            // 'states.create',
+            // 'states.edit',
+            // 'states.delete',
+            // 'cities.view',
+            // 'cities.create',
+            // 'cities.edit',
+            // 'cities.delete',
+            // 'postal-codes.view',
+            // 'postal-codes.create',
+            // 'postal-codes.edit',
+            // 'postal-codes.delete',
+            // 'areas.view',
+            // 'areas.create',
+            // 'areas.edit',
+            // 'areas.delete',
+            // Shipping
+            'warehouses.view',
+            'warehouses.create',
+            'warehouses.edit',
+            'warehouses.delete',
+            'courier-partners.view',
+            'courier-partners.create',
+            'courier-partners.edit',
+            'courier-partners.delete',
+            'shipping-methods.view',
+            'shipping-methods.create',
+            'shipping-methods.edit',
+            'shipping-methods.delete',
+            'shipping-zones.view',
+            'shipping-zones.create',
+            'shipping-zones.edit',
+            'shipping-zones.delete',
+            'shipping-packages.view',
+            'shipping-packages.create',
+            'shipping-packages.edit',
+            'shipping-packages.delete',
+            'shipping-classes.view',
+            'shipping-classes.create',
+            'shipping-classes.edit',
+            'shipping-classes.delete',
+            'shipping-settings.view',
+            'shipping-settings.edit',
         ];
 
         foreach ($permissions as $permissionName) {

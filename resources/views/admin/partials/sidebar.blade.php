@@ -33,18 +33,6 @@
             </a>
         </li>
         @endcan
-        <!-- <li class="nav-item  {{ request()->routeIs('admin.variant-type.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.variant-type.index') }}" class="nav-link nav-toggle">
-                <i class="icon-list"></i>
-                <span class="title">Variant Types</span>
-            </a>
-        </li>
-        <li class="nav-item  {{ request()->routeIs('admin.variant-values.*') ? 'active' : '' }}">
-            <a href="{{ route('admin.variant-values.index') }}" class="nav-link nav-toggle">
-                <i class="icon-list"></i>
-                <span class="title">Variant Values</span>
-            </a>
-        </li> -->
         @canany(['countries.view', 'states.view', 'cities.view', 'postal-codes.view', 'areas.view'])
         <li class="nav-item {{ request()->routeIs('admin.countries.*', 'admin.states.*', 'admin.cities.*', 'admin.postal-codes.*', 'admin.areas.*') ? 'active open' : '' }}">
             <a href="javascript:;" class="nav-link nav-toggle">

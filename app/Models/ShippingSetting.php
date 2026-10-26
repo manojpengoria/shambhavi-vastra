@@ -9,14 +9,15 @@ use Illuminate\Support\Facades\Cache;
 class ShippingSetting extends Model
 {
     public const PAID_BY_CUSTOMER = 'customer';
-    public const PAID_BY_SELLER   = 'seller';
+
+    public const PAID_BY_SELLER = 'seller';
 
     public const RETURN_PAID_BY = [
         self::PAID_BY_CUSTOMER => 'Customer',
-        self::PAID_BY_SELLER   => 'Seller',
+        self::PAID_BY_SELLER => 'Seller',
     ];
 
-    protected const CACHE_KEY = 'shipping_settings';
+    protected const CACHE_KEY = 'shipping_settings.attributes';
 
     protected $fillable = [
         'default_warehouse_id', 'default_courier_partner_id', 'volumetric_divisor',
@@ -26,13 +27,13 @@ class ShippingSetting extends Model
     ];
 
     protected $casts = [
-        'volumetric_divisor'        => 'integer',
-        'free_shipping_above'       => 'decimal:2',
-        'cod_enabled'               => 'boolean',
-        'cod_min_order'             => 'decimal:2',
-        'cod_max_order'             => 'decimal:2',
-        'return_window_days'        => 'integer',
-        'show_delivery_date'        => 'boolean',
+        'volumetric_divisor' => 'integer',
+        'free_shipping_above' => 'decimal:2',
+        'cod_enabled' => 'boolean',
+        'cod_min_order' => 'decimal:2',
+        'cod_max_order' => 'decimal:2',
+        'return_window_days' => 'integer',
+        'show_delivery_date' => 'boolean',
         'pincode_check_before_cart' => 'boolean',
     ];
 
@@ -41,10 +42,20 @@ class ShippingSetting extends Model
         static::saved(fn () => Cache::forget(self::CACHE_KEY));
     }
 
-    /** Hamesha yahi use karein: ShippingSetting::current()->volumetric_divisor */
+    /**
+     * Hamesha yahi use karein: ShippingSetting::current()->volumetric_divisor
+     *
+     * Only the raw attribute array is cached, because the cache store does not
+     * unserialize objects ("serializable_classes" => false in config/cache.php).
+     */
     public static function current(): self
     {
-        return Cache::rememberForever(self::CACHE_KEY, fn () => static::firstOrCreate(['id' => 1]));
+        $attributes = Cache::rememberForever(
+            self::CACHE_KEY,
+            fn () => static::firstOrCreate(['id' => 1])->fresh()->getAttributes()
+        );
+
+        return (new static)->newFromBuilder($attributes);
     }
 
     public function defaultWarehouse(): BelongsTo

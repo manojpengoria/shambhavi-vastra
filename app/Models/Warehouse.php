@@ -16,7 +16,7 @@ class Warehouse extends Model
 
     protected $casts = [
         'is_default' => 'boolean',
-        'is_active'  => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     protected static function booted(): void
@@ -29,10 +29,25 @@ class Warehouse extends Model
         });
     }
 
-    public function state(): BelongsTo      { return $this->belongsTo(State::class); }
-    public function city(): BelongsTo       { return $this->belongsTo(City::class); }
-    public function postalcode(): BelongsTo { return $this->belongsTo(Postalcode::class); }
-    public function area(): BelongsTo       { return $this->belongsTo(Area::class); }
+    public function state(): BelongsTo
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function postalCode(): BelongsTo
+    {
+        return $this->belongsTo(PostalCode::class);
+    }
+
+    public function area(): BelongsTo
+    {
+        return $this->belongsTo(Area::class);
+    }
 
     public function scopeActive(Builder $query): Builder
     {

@@ -57,6 +57,14 @@ class Area extends Model
         return $this->belongsTo(PostalCode::class);
     }
 
+    /**
+     * Label used in searchable dropdowns, e.g. "Malviya Nagar (JAI-MLV)".
+     */
+    public function selectLabel(): string
+    {
+        return "{$this->area_name} ({$this->area_code})";
+    }
+
     public function scopeEnabled($query)
     {
         return $query->where('status', self::STATUS_ENABLED);

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PostalCode extends Model
 {
@@ -32,9 +33,35 @@ class PostalCode extends Model
 
     public const DELIVERY_UNAVAILABLE = 505;
 
+    /**
+     * Post office types keyed by code.
+     *
+     * @var array<string, string>
+     */
+    public const OFFICE_TYPES = [
+        'HO' => 'Head Office',
+        'SO' => 'Sub Office',
+        'BO' => 'Branch Office',
+    ];
+
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function areas(): HasMany
+    {
+        return $this->hasMany(Area::class);
+    }
+
+    /**
+     * Label used in searchable dropdowns, e.g. "302001 - Jaipur GPO".
+     */
+    public function selectLabel(): string
+    {
+        return $this->post_office_name
+            ? "{$this->postal_code} - {$this->post_office_name}"
+            : $this->postal_code;
     }
 
     public function scopeEnabled($query)

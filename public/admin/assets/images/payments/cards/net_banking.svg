@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 6 152 50" width="152" height="50">
+  <g fill="none" stroke="#3c8d2f" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M10 26 L32 12 L54 26 Z"/>
+    <path d="M16 30 V48 M27 30 V48 M37 30 V48 M48 30 V48"/>
+    <path d="M10 52 H54"/>
+  </g>
+  <text x="66" y="29" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#222">NET</text>
+  <text x="66" y="51" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#3c8d2f">BANKING</text>
+</svg>

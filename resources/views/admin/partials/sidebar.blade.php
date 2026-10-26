@@ -13,7 +13,7 @@
                 <span class="title">Dashboard</span>
             </a>
         </li>
-        @canany(['roles.view', 'permissions.view', 'users.view', 'countries.view', 'states.view', 'cities.view', 'postal-codes.view', 'areas.view', 'warehouses.view', 'courier-partners.view', 'shipping-methods.view', 'shipping-zones.view', 'shipping-packages.view', 'shipping-classes.view', 'shipping-settings.view'])
+        @canany(['roles.view', 'permissions.view', 'users.view', 'countries.view', 'states.view', 'cities.view', 'postal-codes.view', 'areas.view', 'warehouses.view', 'courier-partners.view', 'shipping-methods.view', 'shipping-zones.view', 'shipping-packages.view', 'shipping-classes.view', 'shipping-settings.view', 'payment-options.view'])
         <li class="heading">
             <h3 class="uppercase">Masters</h3>
         </li>
@@ -22,6 +22,14 @@
             <a href="{{ route('admin.roles.index') }}" class="nav-link nav-toggle">
                 <i class="icon-badge"></i>
                 <span class="title">Roles & Permissions</span>
+            </a>
+        </li>
+        @endcan
+        @can('payment-options.view')
+        <li class="nav-item {{ request()->routeIs('admin.payment-options.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.payment-options.index') }}" class="nav-link nav-toggle">
+                <i class="icon-wallet"></i>
+                <span class="title">Payment Options</span>
             </a>
         </li>
         @endcan

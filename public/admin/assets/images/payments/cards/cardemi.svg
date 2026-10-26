@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 6 152 50" width="152" height="50">
+  <g fill="none" stroke="#1f5fa8" stroke-width="4" stroke-linejoin="round">
+    <rect x="8" y="14" width="48" height="34" rx="5"/>
+    <path d="M8 24 H56"/>
+  </g>
+  <path d="M16 38 H30" stroke="#1f5fa8" stroke-width="4" stroke-linecap="round"/>
+  <text x="66" y="29" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#222">CARD</text>
+  <text x="66" y="51" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="700" fill="#1f5fa8">EMI</text>
+</svg>

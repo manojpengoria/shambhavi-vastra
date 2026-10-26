@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\CourierPartnerController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\LocationLookupController;
+use App\Http\Controllers\Admin\PaymentOptionController;
 use App\Http\Controllers\Admin\PostalCodeController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\RoleController;
@@ -363,6 +364,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/areas/{area}', [AreaController::class, 'destroy'])
             ->middleware('permission:areas.delete,admin')
             ->name('areas.destroy');
+
+        // Payment Options (methods are defined in config/payment_methods.php)
+        Route::get('/payment-options', [PaymentOptionController::class, 'index'])
+            ->middleware('permission:payment-options.view,admin')
+            ->name('payment-options.index');
+
+        Route::post('/payment-options/{code}', [PaymentOptionController::class, 'save'])
+            ->middleware('permission:payment-options.edit,admin')
+            ->where('code', '[a-z0-9_]+')
+            ->name('payment-options.save');
 
         // Shipping Management
         // Warehouses

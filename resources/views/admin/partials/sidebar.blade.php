@@ -183,12 +183,14 @@
         <li class="heading">
             <h3 class="uppercase">Features</h3>
         </li>
-        <li class="nav-item  ">
-            <a href="javascript:;" class="nav-link nav-toggle">
+        @can('products.view')
+        <li class="nav-item {{ request()->routeIs('admin.products.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.products.index') }}" class="nav-link nav-toggle">
                 <i class="icon-graph"></i>
                 <span class="title">Products</span>
             </a>
         </li>
+        @endcan
         <li class="nav-item  ">
             <a href="javascript:;" class="nav-link nav-toggle">
                 <i class="icon-basket"></i>

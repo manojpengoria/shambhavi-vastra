@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -132,6 +133,27 @@ class Product extends Model
     public function shippingPackage(): BelongsTo
     {
         return $this->belongsTo(ShippingPackage::class);
+    }
+
+    /**
+     * Images to show for a chosen variant: its own photo first (e.g. red for
+     * Red / M), then the remaining product images. Without one, all images.
+     *
+     * @return Collection<int, ProductImage>
+     */
+    public function imagesForVariant(?ProductVariant $variant): Collection
+    {
+        $images = $this->images;
+        $variantImage = $images->firstWhere('id', $variant?->product_image_id);
+
+        if (! $variantImage) {
+            return $images;
+        }
+
+        return $images
+            ->reject(fn (ProductImage $image) => $image->is($variantImage))
+            ->prepend($variantImage)
+            ->values();
     }
 
     /**

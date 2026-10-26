@@ -527,6 +527,7 @@
                                     <th>Barcode (Optional)</th>
                                     <th>Weight (kg)</th>
                                     <th>Quantity (Optional)</th>
+                                    <th>Image</th>
                                     <th>Main</th>
                                 </tr>
                             </thead>
@@ -961,7 +962,7 @@
         }
 
         .generated-variants-table {
-            min-width: 1260px;
+            min-width: 1420px;
             margin-bottom: 0;
         }
 
@@ -981,6 +982,26 @@
         .generated-variants-table .variant-combination-name {
             min-width: 150px;
             white-space: nowrap;
+        }
+
+        /* Variant-wise image: pick one of the uploaded product images per variant */
+        .variant-image-picker {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 170px;
+        }
+
+        .variant-image-thumb {
+            flex: 0 0 34px;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #ddd;
+            object-fit: cover;
+        }
+
+        .variant-image-thumb[hidden] {
+            display: none;
         }
 
         .generated-variants-table .variant-row-toggle,
@@ -1241,6 +1262,7 @@
                     removeButton.hidden = false;
                     mainImageLabel.hidden = false;
                     syncMainImageRadios();
+                    syncVariantImageSelects();
                 });
 
                 removeButton.addEventListener('click', function () {
@@ -1258,6 +1280,7 @@
                         previewUrl = null;
                     }
                     syncMainImageRadios();
+                    syncVariantImageSelects();
                 });
 
                 mainImageInput.addEventListener('change', function () {
@@ -1381,6 +1404,78 @@
                 return input;
             };
 
+            /*
+             * Variant-wise image: every generated variant row gets an "Image" dropdown
+             * listing the uploaded product images (Image 1, Image 2, ...) with a thumbnail,
+             * so e.g. Red / M can show the red photo. Blank = main product image.
+             */
+            const uploadedImageOptions = function () {
+                return imageSlots
+                    .map(function (slot, index) {
+                        const preview = slot.querySelector('.product-image-preview');
+
+                        return preview.hidden || !preview.getAttribute('src')
+                            ? null
+                            : { slot: String(index + 1), src: preview.getAttribute('src') };
+                    })
+                    .filter(Boolean);
+            };
+
+            const fillVariantImageSelect = function (select) {
+                const thumb = select.parentElement.querySelector('.variant-image-thumb');
+                const options = uploadedImageOptions();
+                const selectedSlot = select.dataset.selectedSlot || '';
+
+                select.replaceChildren(new Option('Main product image', ''));
+                options.forEach(function (option) {
+                    select.add(new Option('Image ' + option.slot, option.slot));
+                });
+
+                const chosen = options.find(function (option) {
+                    return option.slot === selectedSlot;
+                });
+                select.value = chosen ? chosen.slot : '';
+                // A removed image falls back to the main product image.
+                select.dataset.selectedSlot = select.value;
+
+                thumb.hidden = !chosen;
+                if (chosen) {
+                    thumb.src = chosen.src;
+                } else {
+                    thumb.removeAttribute('src');
+                }
+            };
+
+            const syncVariantImageSelects = function () {
+                generatedVariantsBody.querySelectorAll('.variant-image-select').forEach(fillVariantImageSelect);
+            };
+
+            const addVariantImagePicker = function (row, index, selectedSlot) {
+                const cell = document.createElement('td');
+                const picker = document.createElement('div');
+                const thumb = document.createElement('img');
+                const select = document.createElement('select');
+
+                picker.className = 'variant-image-picker';
+                thumb.className = 'variant-image-thumb';
+                thumb.alt = '';
+                thumb.hidden = true;
+                select.name = 'product_variants[' + index + '][image_slot]';
+                select.className = 'form-control input-sm variant-image-select';
+                select.dataset.field = 'image_slot';
+                select.dataset.selectedSlot = selectedSlot ? String(selectedSlot) : '';
+                select.setAttribute('aria-label', 'Image for this variant');
+                select.addEventListener('change', function () {
+                    this.dataset.selectedSlot = this.value;
+                    fillVariantImageSelect(this);
+                });
+
+                picker.append(thumb, select);
+                cell.appendChild(picker);
+                row.appendChild(cell);
+                fillVariantImageSelect(select);
+            };
+
             const renderVariantCombinations = function () {
                 const savedValues = captureGeneratedVariantValues();
                 const combinations = getVariantCombinations();
@@ -1400,6 +1495,7 @@
                     barcode: '',
                     weight: document.getElementById('weight').value,
                     quantity: document.getElementById('stock_quantity').value,
+                    image_slot: '',
                 };
 
                 generatedVariantsBody.replaceChildren();
@@ -1454,6 +1550,7 @@
                     addVariantInput(row, index, 'barcode', 'text', rowValues.barcode);
                     addVariantInput(row, index, 'weight', 'number', rowValues.weight);
                     addVariantInput(row, index, 'quantity', 'number', rowValues.quantity);
+                    addVariantImagePicker(row, index, rowValues.image_slot);
 
                     const mainCell = document.createElement('td');
                     const mainInput = document.createElement('input');

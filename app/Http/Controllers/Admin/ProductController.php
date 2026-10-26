@@ -109,7 +109,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product): View
     {
-        $product->load(['categories:id', 'images', 'variants.values']);
+        $product->load(['categories:id', 'images', 'variants.values', 'variants.image']);
 
         return view('admin.products.edit', [
             'product' => $product,
@@ -301,6 +301,7 @@ class ProductController extends Controller
                         'barcode' => $row['barcode'] ?? '',
                         'weight' => $row['weight'] ?? '',
                         'quantity' => $row['quantity'] ?? '',
+                        'image_slot' => $row['image_slot'] ?? '',
                     ],
                 ])
                 ->all();
@@ -321,6 +322,7 @@ class ProductController extends Controller
                     'barcode' => $variant->barcode ?? '',
                     'weight' => $variant->weight ?? '',
                     'quantity' => $variant->quantity ?? '',
+                    'image_slot' => $variant->image?->sort_order ?? '',
                 ],
             ])
             ->all();
@@ -442,6 +444,7 @@ class ProductController extends Controller
                 ),
             ],
             'enabled_product_variants.*.barcode' => ['exclude_unless:has_variants,1', 'nullable', $barcodeFormat],
+            'enabled_product_variants.*.image_slot' => ['exclude_unless:has_variants,1', 'nullable', 'integer', 'between:1,'.Product::MAX_IMAGES],
             'enabled_product_variants.*.weight' => ['exclude_unless:has_variants,1', 'nullable', 'numeric', 'gt:0', 'max:99999.999'],
             'enabled_product_variants.*.quantity' => [
                 'exclude_unless:has_variants,1',
@@ -546,6 +549,7 @@ class ProductController extends Controller
 
             if ($hasVariants) {
                 $this->validateVariantCombinations($validator, $request, $enabledVariants);
+                $this->validateVariantImageSlots($validator, $request, $enabledVariants);
             }
         });
 
@@ -616,6 +620,30 @@ class ProductController extends Controller
 
         if (! $normalizedKeys->contains($this->normalizeCombinationKey((string) $request->input('main_variant_key')))) {
             $validator->errors()->add('main_variant_key', 'The main variant must be one of the selected variants.');
+        }
+    }
+
+    /**
+     * A variant can only use an image slot that holds an image (new upload or kept image).
+     *
+     * @param  array<int, array<string, mixed>>  $enabledVariants
+     */
+    private function validateVariantImageSlots(ValidationValidator $validator, Request $request, array $enabledVariants): void
+    {
+        $filledSlots = array_merge(
+            array_keys($request->file('product_images', [])),
+            array_keys(array_filter((array) $request->input('existing_image_ids', [])))
+        );
+
+        foreach ($enabledVariants as $index => $row) {
+            $imageSlot = $row['image_slot'] ?? null;
+
+            if (filled($imageSlot) && ! in_array((int) $imageSlot, array_map('intval', $filledSlots), true)) {
+                $validator->errors()->add(
+                    "enabled_product_variants.{$index}.image_slot",
+                    "The image selected for a variant (Image {$imageSlot}) has no uploaded photo."
+                );
+            }
         }
     }
 
@@ -792,6 +820,9 @@ class ProductController extends Controller
 
         $existingVariants = $product->variants()->get()->keyBy('combination_key');
 
+        // Images are synced first, so every slot now maps to a saved image id.
+        $imageIdsBySlot = $product->images()->pluck('id', 'sort_order');
+
         foreach ($rows->values() as $index => $row) {
             $productPrice = (float) $row['product_price'];
             $discountPrice = (float) ($row['discount_price'] ?? 0);
@@ -806,6 +837,7 @@ class ProductController extends Controller
                 'net_price' => max(0, $productPrice - $discountPrice),
                 'weight' => filled($row['weight'] ?? null) ? $row['weight'] : null,
                 'quantity' => filled($row['quantity'] ?? null) ? $row['quantity'] : null,
+                'product_image_id' => filled($row['image_slot'] ?? null) ? $imageIdsBySlot->get((int) $row['image_slot']) : null,
                 'is_main' => $row['key'] === $mainVariantKey,
                 'sort_order' => $index,
             ])->save();

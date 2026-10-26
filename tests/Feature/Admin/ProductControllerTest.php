@@ -617,4 +617,96 @@ class ProductControllerTest extends TestCase
             ->get(route('admin.products.index'))
             ->assertSee($mainImage->url(), false);
     }
+
+    public function test_each_variant_can_use_one_of_the_uploaded_images(): void
+    {
+        Storage::fake('public');
+        $category = $this->category();
+        [$red, $medium, $large] = $this->sizeAndColorValues();
+        $admin = $this->productManager();
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.products.store'), $this->productPayload($category, [
+                'has_variants' => '1',
+                'track_inventory' => '0',
+                'product_images' => [
+                    1 => UploadedFile::fake()->image('front.jpg'),
+                    2 => UploadedFile::fake()->image('red-medium.jpg'),
+                    3 => UploadedFile::fake()->image('red-large.jpg'),
+                ],
+                'main_product_image' => 1,
+                'product_variants' => [
+                    ['enabled' => '1', 'key' => $this->key($red, $medium), 'product_price' => '2500', 'image_slot' => 2],
+                    ['enabled' => '1', 'key' => $this->key($red, $large), 'product_price' => '2600', 'image_slot' => 3],
+                    ['enabled' => '1', 'key' => $this->key($red), 'product_price' => '2600', 'image_slot' => ''],
+                ],
+                'main_variant_key' => $this->key($red, $medium),
+            ]))
+            ->assertSessionHasErrors('product_variants');
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.products.store'), $this->productPayload($category, [
+                'has_variants' => '1',
+                'track_inventory' => '0',
+                'product_images' => [
+                    1 => UploadedFile::fake()->image('front.jpg'),
+                    2 => UploadedFile::fake()->image('red-medium.jpg'),
+                    3 => UploadedFile::fake()->image('red-large.jpg'),
+                ],
+                'main_product_image' => 1,
+                'product_variants' => [
+                    ['enabled' => '1', 'key' => $this->key($red, $medium), 'product_price' => '2500', 'image_slot' => 2],
+                    ['enabled' => '1', 'key' => $this->key($red, $large), 'product_price' => '2600', 'image_slot' => ''],
+                ],
+                'main_variant_key' => $this->key($red, $medium),
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $product = Product::with(['images', 'variants.image'])->firstOrFail();
+        $images = $product->images->keyBy('sort_order');
+        $redMedium = $product->variants->firstWhere('combination_key', $this->key($red, $medium));
+        $redLarge = $product->variants->firstWhere('combination_key', $this->key($red, $large));
+
+        $this->assertSame($images[2]->id, $redMedium->product_image_id);
+        $this->assertNull($redLarge->product_image_id);
+        $this->assertSame([2, 1, 3], $product->imagesForVariant($redMedium)->pluck('sort_order')->all());
+        $this->assertSame([1, 2, 3], $product->imagesForVariant($redLarge)->pluck('sort_order')->all());
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.products.edit', $product))
+            ->assertOk()
+            ->assertSee('<th>Image</th>', false)
+            ->assertSee('&quot;image_slot&quot;:2', false);
+
+        // Keeping the images but moving the variant to image 3 updates the link; removing image 3 clears it.
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.products.update', $product), $this->productPayload($category, [
+                'has_variants' => '1',
+                'track_inventory' => '0',
+                'existing_image_ids' => $product->images()->pluck('id', 'sort_order')->all(),
+                'product_images' => [],
+                'main_product_image' => 1,
+                'product_variants' => [
+                    ['enabled' => '1', 'key' => $this->key($red, $medium), 'product_price' => '2500', 'image_slot' => 3],
+                ],
+                'main_variant_key' => $this->key($red, $medium),
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame($images[3]->id, $redMedium->fresh()->product_image_id);
+
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.products.update', $product), $this->productPayload($category, [
+                'has_variants' => '1',
+                'track_inventory' => '0',
+                'existing_image_ids' => [1 => $images[1]->id],
+                'product_images' => [],
+                'main_product_image' => 1,
+                'product_variants' => [
+                    ['enabled' => '1', 'key' => $this->key($red, $medium), 'product_price' => '2500', 'image_slot' => 3],
+                ],
+                'main_variant_key' => $this->key($red, $medium),
+            ]))
+            ->assertSessionHasErrors('enabled_product_variants.0.image_slot');
+    }
 }

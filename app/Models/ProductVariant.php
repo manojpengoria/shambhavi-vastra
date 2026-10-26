@@ -10,6 +10,7 @@ class ProductVariant extends Model
 {
     protected $fillable = [
         'product_id',
+        'product_image_id',
         'combination_key',
         'sku',
         'barcode',
@@ -38,6 +39,14 @@ class ProductVariant extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Photo shown when this variant is chosen (e.g. the red photo for Red / M).
+     */
+    public function image(): BelongsTo
+    {
+        return $this->belongsTo(ProductImage::class, 'product_image_id');
     }
 
     /**

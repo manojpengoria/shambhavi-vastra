@@ -22,6 +22,7 @@ class VariantTypeController extends Controller
             ->orderBy('sort_order')
             ->orderByDesc('id')
             ->paginate(15);
+
         return view('admin.variant-types.index', compact('variantTypes'));
     }
 
@@ -42,19 +43,20 @@ class VariantTypeController extends Controller
             'variant_type_name' => ['required', 'string', 'max:100', 'unique:variant_types,variant_type_name'],
             'slug' => ['nullable', 'string', 'max:120', 'unique:variant_types,slug'],
             'description' => ['nullable', 'string'],
+            'used_for_variants' => ['required', 'boolean'],
             'status' => ['required', Rule::in([707, 505])],
             'sort_order' => ['required', 'integer', 'min:0'],
         ]);
 
         $validated['slug'] = $this->generateUniqueSlug(
-            $validated['slug'] ?: $validated['variant_type_name']
+            ($validated['slug'] ?? null) ?: $validated['variant_type_name']
         );
 
         VariantType::create($validated);
 
         return redirect()
             ->route('admin.variant-type.index')
-            ->with('success', 'Variant Type created successfully.');
+            ->with('success', 'Attribute created successfully.');
     }
 
     /**
@@ -93,6 +95,7 @@ class VariantTypeController extends Controller
                 Rule::unique('variant_types', 'slug')->ignore($variantType->id),
             ],
             'description' => ['nullable', 'string'],
+            'used_for_variants' => ['required', 'boolean'],
             'status' => ['required', Rule::in([707, 505])],
             'sort_order' => ['required', 'integer', 'min:0'],
         ]);
@@ -102,11 +105,17 @@ class VariantTypeController extends Controller
             $variantType->id
         );
 
+        $flagError = $this->usedForVariantsChangeError($variantType, (bool) $validated['used_for_variants']);
+
+        if ($flagError) {
+            return back()->withInput()->withErrors(['used_for_variants' => $flagError]);
+        }
+
         $variantType->update($validated);
 
         return redirect()
             ->route('admin.variant-type.index')
-            ->with('success', 'Variant Type updated successfully.');
+            ->with('success', 'Attribute updated successfully.');
     }
 
     /**
@@ -118,20 +127,40 @@ class VariantTypeController extends Controller
         if ($variantType->values()->exists()) {
             return back()->with(
                 'error',
-                'Delete its variant values first.'
+                'Delete its attribute values first.'
             );
         }
 
         $variantType->delete();
+
         return redirect()
             ->route('admin.variant-type.index')
-            ->with('success', 'Variant Type deleted successfully.');
+            ->with('success', 'Attribute deleted successfully.');
+    }
+
+    /**
+     * The "Used for variants" flag cannot change while products still use the attribute the other way.
+     */
+    private function usedForVariantsChangeError(VariantType $variantType, bool $usedForVariants): ?string
+    {
+        if ($variantType->used_for_variants === $usedForVariants) {
+            return null;
+        }
+
+        if (! $usedForVariants && DB::table('product_variant_values')->where('variant_type_id', $variantType->id)->exists()) {
+            return 'This attribute is used by product variants. Remove it from those products before setting "Used for variants" to No.';
+        }
+
+        if ($usedForVariants && DB::table('product_attribute_values')->where('variant_type_id', $variantType->id)->exists()) {
+            return 'This attribute is used as a product specification. Remove it from those products before setting "Used for variants" to Yes.';
+        }
+
+        return null;
     }
 
     /**
      *  Generated slug for unique.
      */
-     
     private function generateUniqueSlug(string $value, ?int $ignoreId = null): string
     {
         $baseSlug = Str::slug($value);

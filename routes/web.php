@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\ShippingMethodController;
 use App\Http\Controllers\Admin\ShippingPackageController;
 use App\Http\Controllers\Admin\ShippingSettingController;
 use App\Http\Controllers\Admin\ShippingZoneController;
+use App\Http\Controllers\Admin\SizeChartController;
 use App\Http\Controllers\Admin\StateController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VariantTypeController;
@@ -221,6 +222,31 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/variant-values/{variant_value}', [VariantValueController::class, 'destroy'])
             // ->middleware('permission:categories.delete,admin')
             ->name('variant-values.destroy');
+
+        // Size Charts
+        Route::get('/size-charts', [SizeChartController::class, 'index'])
+            ->middleware('permission:size-charts.view,admin')
+            ->name('size-charts.index');
+
+        Route::get('/size-charts/create', [SizeChartController::class, 'create'])
+            ->middleware('permission:size-charts.create,admin')
+            ->name('size-charts.create');
+
+        Route::post('/size-charts', [SizeChartController::class, 'store'])
+            ->middleware('permission:size-charts.create,admin')
+            ->name('size-charts.store');
+
+        Route::get('/size-charts/{size_chart}/edit', [SizeChartController::class, 'edit'])
+            ->middleware('permission:size-charts.edit,admin')
+            ->name('size-charts.edit');
+
+        Route::put('/size-charts/{size_chart}', [SizeChartController::class, 'update'])
+            ->middleware('permission:size-charts.edit,admin')
+            ->name('size-charts.update');
+
+        Route::delete('/size-charts/{size_chart}', [SizeChartController::class, 'destroy'])
+            ->middleware('permission:size-charts.delete,admin')
+            ->name('size-charts.destroy');
 
         // Location Management
         // Location lookups (searchable dropdowns)

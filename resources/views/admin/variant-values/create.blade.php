@@ -6,7 +6,7 @@
     <div class="page-head">
         <!-- BEGIN PAGE TITLE -->
         <div class="page-title">
-            <h1>Create Variant Value <small>Add a main variant value.</small></h1>
+            <h1>Create Attribute Value <small>Add a main attribute value.</small></h1>
         </div>
         <!-- END PAGE TITLE -->
     </div>
@@ -18,7 +18,7 @@
             <i class="fa fa-circle"></i>
         </li>
         <li>
-            <a href="javascript;">Variant Value</a>
+            <a href="javascript;">Attribute Value</a>
             <i class="fa fa-circle"></i>
         </li>
     </ul>
@@ -32,10 +32,10 @@
                 <div class="portlet-title">
                     <div class="caption">
                         <i class="icon-equalizer font-blue-hoki"></i>
-                        <span class="caption-subject font-blue-hoki bold uppercase">Create Variant Value</span>
+                        <span class="caption-subject font-blue-hoki bold uppercase">Create Attribute Value</span>
                     </div>
                     <div class="actions">
-                        <a href="{{ route('admin.variant-values.index') }}" class="btn btn-circle btn-default btn-sm" data-toggle="tooltip" title="Back to Variant Value List">
+                        <a href="{{ route('admin.variant-values.index') }}" class="btn btn-circle btn-default btn-sm" data-toggle="tooltip" title="Back to Attribute Value List">
                             <i class="fa fa-arrow-left"></i> Back
                         </a>
                         <a class="btn btn-circle btn-icon-only btn-default fullscreen" href="javascript:;" data-original-title="" title="">
@@ -58,9 +58,9 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="control-label">Variant Type <span class="text-danger">*</span></label>
+                                        <label class="control-label">Attribute <span class="text-danger">*</span></label>
                                         <select name="variant_type_id" id="variant_type_id" class="form-control" required>
-                                            <option value="">Select Variant Type</option>
+                                            <option value="">Select Attribute</option>
                                             @foreach($variantTypes as $type)
                                                 <option value="{{ $type->id }}"
                                                     @selected(old('variant_type_id') == $type->id)>
@@ -72,7 +72,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label class="control-label">Variant Value Name<span class="text-danger">*</span></label> <small>(e.g.: S, M, XL, Red, Cotton etc)</small>
+                                        <label class="control-label">Value Name<span class="text-danger">*</span></label> <small>(e.g.: S, M, XL, Red, Cotton etc)</small>
                                         <input type="text" id="variant-value" name="variant_value_name" class="form-control" value="{{ old('variant_value_name') }}" placeholder="e.g. S, M, XL, Red, Cotton" maxlength="100" required>
                                     </div>
                                 </div>
@@ -90,7 +90,7 @@
                                     <label class="control-label">Color Code</label>
                                     <input type="text" class="colorpicker-default form-control" value="">
                                     <small class="text-muted">
-                                        Optional. Use for Color variant values.
+                                        Optional. Use for Color attribute values.
                                     </small>
                                 </div>
                             </div>
@@ -116,7 +116,7 @@
                             <!--/row-->
                         </div>
                         <div class="form-actions right">
-                            <button type="button" class="btn default">Cancel</button>
+                            <a href="{{ route('admin.variant-values.index') }}" class="btn default">Cancel</a>
                             <button type="submit" class="btn green">Submit</button>
                         </div>
                     </form>

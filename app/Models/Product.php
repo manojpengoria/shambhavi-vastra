@@ -55,6 +55,7 @@ class Product extends Model
         'height',
         'shipping_class_id',
         'shipping_package_id',
+        'size_chart_id',
         'free_shipping',
         'cod_available',
         'shipping_days',
@@ -133,6 +134,20 @@ class Product extends Model
     public function shippingPackage(): BelongsTo
     {
         return $this->belongsTo(ShippingPackage::class);
+    }
+
+    public function sizeChart(): BelongsTo
+    {
+        return $this->belongsTo(SizeChart::class);
+    }
+
+    /**
+     * Specification values from the Attribute master, e.g. Fabric: Cotton.
+     */
+    public function attributeValues(): BelongsToMany
+    {
+        return $this->belongsToMany(VariantValue::class, 'product_attribute_values')
+            ->withPivot('variant_type_id');
     }
 
     /**

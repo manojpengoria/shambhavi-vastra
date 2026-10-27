@@ -6,8 +6,8 @@
     <div class="page-head">
         <!-- BEGIN PAGE TITLE -->
         <div class="page-title">
-            <h1>Variant Values</h1>
-            <small>Manage product variant values.</small>
+            <h1>Attribute Values</h1>
+            <small>Manage product attribute values.</small>
         </div>
         <!-- END PAGE TITLE -->
     </div>
@@ -19,7 +19,7 @@
             <i class="fa fa-circle"></i>
         </li>
         <li>
-            <a href="{{ route('admin.variant-values.index') }}">Variant Value</a>
+            <a href="{{ route('admin.variant-values.index') }}">Attribute Value</a>
         </li>
     </ul>
     <!-- END PAGE BREADCRUMB -->
@@ -31,12 +31,12 @@
             <div class="portlet box blue-madison">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="fa fa-cogs"></i>Variant Value List
+                        <i class="fa fa-cogs"></i>Attribute Value List
                     </div>
                     <!-- @can('categories.create') -->
                     <div class="actions">
                         <a href="{{ route('admin.variant-values.create') }}" class="btn btn-warning btn-md pointer">
-                        <i class="fa fa-plus"></i> Add New Variant Value</a>
+                        <i class="fa fa-plus"></i> Add New Attribute Value</a>
                     </div>
                     <!-- @endcan -->
                 </div>
@@ -58,8 +58,8 @@
                     <thead>
                     <tr>
                         <th>#</th>
-                        <th>Variant Type</th>
-                        <th>Variant Value</th>
+                        <th>Attribute</th>
+                        <th>Attribute Value</th>
                         <th>Slug</th>
                         <th>Color</th>
                         <th>Status</th>
@@ -112,7 +112,7 @@
                                         <form action="{{ route('admin.variant-values.destroy', $item) }}" method="POST" class="d-inline" style="display: inline-block;">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-icon-only red" onclick="return confirm('Are you sure you want to delete this variant value?')">
+                                            <button type="submit" class="btn btn-icon-only red" onclick="return confirm('Are you sure you want to delete this attribute value?')">
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </form>
@@ -122,7 +122,7 @@
                         @empty
                             <tr>
                                 <td colspan="8" class="text-center py-5 text-muted">
-                                    No variant values found.
+                                    No attribute values found.
                                 </td>
                             </tr>
                         @endforelse

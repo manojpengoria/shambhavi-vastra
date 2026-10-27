@@ -87,23 +87,30 @@
             </ul>
         </li>
         @endcanany
-        <li class="nav-item  {{ request()->routeIs('admin.variant-type.*', 'admin.variant-values.*') ? 'active' : '' }}">
+        <li class="nav-item {{ request()->routeIs('admin.variant-type.*', 'admin.variant-values.*', 'admin.size-charts.*') ? 'active open' : '' }}">
             <a href="javascript:;" class="nav-link nav-toggle">
                 <i class="icon-vector"></i>
-                <span class="title">Variants</span>
+                <span class="title">Attributes</span>
                 <span class="arrow"></span>
             </a>
             <ul class="sub-menu">
-                <li class="nav-item  ">
+                <li class="nav-item {{ request()->routeIs('admin.variant-type.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.variant-type.index') }}" class="nav-link ">
-                        <span class="title">Variant Types</span>
+                        <span class="title">Attributes</span>
                     </a>
                 </li>
-                <li class="nav-item  ">
+                <li class="nav-item {{ request()->routeIs('admin.variant-values.*') ? 'active' : '' }}">
                     <a href="{{ route('admin.variant-values.index') }}" class="nav-link ">
-                        <span class="title">Variant Values</span>
+                        <span class="title">Attribute Values</span>
                     </a>
                 </li>
+                @can('size-charts.view')
+                <li class="nav-item {{ request()->routeIs('admin.size-charts.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.size-charts.index') }}" class="nav-link ">
+                        <span class="title">Size Charts</span>
+                    </a>
+                </li>
+                @endcan
             </ul>
         </li>
         @canany(['warehouses.view', 'courier-partners.view', 'shipping-methods.view', 'shipping-zones.view', 'shipping-packages.view', 'shipping-classes.view', 'shipping-settings.view'])

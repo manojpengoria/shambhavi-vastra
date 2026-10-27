@@ -7,6 +7,7 @@ use App\Models\VariantType;
 use App\Models\VariantValue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -83,9 +84,10 @@ class VariantValueController extends Controller
         );
 
         VariantValue::create($validated);
+
         return redirect()
             ->route('admin.variant-values.index')
-            ->with('success', 'Variant Value created successfully.');
+            ->with('success', 'Attribute Value created successfully.');
     }
 
     /**
@@ -139,9 +141,10 @@ class VariantValueController extends Controller
         );
 
         $variantValue->update($validated);
+
         return redirect()
             ->route('admin.variant-values.index')
-            ->with('success', 'Variant Value updated successfully.');
+            ->with('success', 'Attribute Value updated successfully.');
     }
 
     /**
@@ -149,17 +152,25 @@ class VariantValueController extends Controller
      */
     public function destroy(VariantValue $variantValue): RedirectResponse
     {
+        $isUsedByProducts = DB::table('product_variant_values')->where('variant_value_id', $variantValue->id)->exists()
+            || DB::table('product_attribute_values')->where('variant_value_id', $variantValue->id)->exists();
+
+        if ($isUsedByProducts) {
+            return redirect()
+                ->route('admin.variant-values.index')
+                ->with('error', 'This attribute value is used by products and cannot be deleted. Set it to Inactive instead.');
+        }
+
         $variantValue->delete();
 
         return redirect()
             ->route('admin.variant-values.index')
-            ->with('success', 'Variant Value deleted successfully.');
+            ->with('success', 'Attribute Value deleted successfully.');
     }
 
     /**
      *  Generated slug for unique.
      */
-     
     private function generateUniqueSlug(string $value, int $variantTypeId, ?int $ignoreId = null): string
     {
         $baseSlug = Str::slug($value);

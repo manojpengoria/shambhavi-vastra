@@ -546,6 +546,64 @@
     <div class="portlet light bordered">
         <div class="portlet-title">
             <div class="caption">
+                <i class="fa fa-list-alt"></i>
+                <span class="caption-subject bold uppercase">Attributes &amp; Size Chart</span>
+                <span class="caption-helper">Product specifications from the Attribute master</span>
+            </div>
+        </div>
+        <div class="portlet-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group @error('size_chart_id') has-error @enderror">
+                        <label class="control-label" for="size_chart_id">Size Chart</label>
+                        <select id="size_chart_id" name="size_chart_id" class="form-control">
+                            <option value="">No size chart</option>
+                            @foreach ($sizeCharts as $sizeChart)
+                                <option value="{{ $sizeChart->id }}" @selected((string) old('size_chart_id', $product?->size_chart_id) === (string) $sizeChart->id)>
+                                    {{ $sizeChart->name }} ({{ \App\Models\SizeChart::UNITS[$sizeChart->unit] ?? $sizeChart->unit }})
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="help-block">Shown to customers on the product page. Manage charts in Attributes &gt; Size Charts.</p>
+                    </div>
+                </div>
+            </div>
+
+            @if ($specificationAttributes->isEmpty())
+                <p class="text-muted mb-0">
+                    No specification attributes yet. Add an attribute with "Used for variants" = No (e.g. Fabric) and give it values to fill it here.
+                </p>
+            @else
+                <div class="row">
+                    @foreach ($specificationAttributes as $attribute)
+                        <div class="col-md-4 col-sm-6">
+                            <div class="form-group @error("product_attributes.{$attribute->id}") has-error @enderror">
+                                <label class="control-label" for="product_attribute_{{ $attribute->id }}">{{ $attribute->variant_type_name }}</label>
+                                <select
+                                    id="product_attribute_{{ $attribute->id }}"
+                                    name="product_attributes[{{ $attribute->id }}][]"
+                                    class="form-control product-attribute-select"
+                                    data-placeholder="Select {{ strtolower($attribute->variant_type_name) }}"
+                                    multiple
+                                    style="width: 100%;"
+                                >
+                                    @foreach ($attribute->values as $attributeValue)
+                                        <option value="{{ $attributeValue->id }}" @selected(in_array($attributeValue->id, $selectedAttributeValueIds, true))>
+                                            {{ $attributeValue->variant_value_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+        </div>
+    </div>
+
+    <div class="portlet light bordered">
+        <div class="portlet-title">
+            <div class="caption">
                 <i class="fa fa-truck"></i>
                 <span class="caption-subject bold uppercase">Shipping</span>
                 <span class="caption-helper">Used to calculate shipping charges and delivery estimates</span>
@@ -1057,6 +1115,16 @@
 
                     return category.text;
                 },
+            });
+
+            $('.product-attribute-select').each(function () {
+                $(this).select2({
+                    theme: 'bootstrap',
+                    placeholder: this.dataset.placeholder,
+                    allowClear: true,
+                    width: '100%',
+                    closeOnSelect: false,
+                });
             });
 
             const productName = document.getElementById('product_name');

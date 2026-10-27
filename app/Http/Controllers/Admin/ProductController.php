@@ -11,6 +11,7 @@ use App\Models\ProductVariant;
 use App\Models\ShippingClass;
 use App\Models\ShippingPackage;
 use App\Models\ShippingSetting;
+use App\Models\SizeChart;
 use App\Models\VariantType;
 use App\Models\VariantValue;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -109,7 +110,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product): View
     {
-        $product->load(['categories:id', 'images', 'variants.values', 'variants.image']);
+        $product->load(['categories:id', 'images', 'variants.values', 'variants.image', 'attributeValues']);
 
         return view('admin.products.edit', [
             'product' => $product,
@@ -161,8 +162,9 @@ class ProductController extends Controller
             ? $product->variants->flatMap->values->pluck('id')->unique()->all()
             : [];
 
+        // Only "Used for variants" attributes (Size, Color) build variants.
         $variantTypes = VariantType::query()
-            ->where('status', 707)
+            ->forVariants()
             ->with([
                 'values' => fn (HasMany $query) => $query
                     ->where(fn ($query) => $query->where('status', 707)->orWhereIn('id', $usedVariantValueIds))
@@ -197,6 +199,30 @@ class ProductController extends Controller
 
         $imagesBySlot = $product ? $product->images->keyBy('sort_order') : collect();
 
+        // Specification attributes (Fabric, Fit...) with their active values, plus values the product already uses.
+        $savedAttributeValueIds = $product ? $product->attributeValues->pluck('id')->all() : [];
+        $specificationAttributes = VariantType::query()
+            ->forSpecifications()
+            ->with([
+                'values' => fn (HasMany $query) => $query
+                    ->where(fn ($query) => $query->where('status', 707)->orWhereIn('id', $savedAttributeValueIds)),
+            ])
+            ->orderBy('sort_order')
+            ->orderBy('variant_type_name')
+            ->get()
+            ->filter(fn (VariantType $attribute) => $attribute->values->isNotEmpty())
+            ->values();
+
+        $selectedAttributeValueIds = old('product_attributes') !== null
+            ? collect((array) old('product_attributes'))->flatten()->map(fn ($id) => (int) $id)->all()
+            : $savedAttributeValueIds;
+
+        $sizeCharts = SizeChart::query()
+            ->where(fn ($query) => $query->active()->orWhere('id', $product?->size_chart_id))
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'unit']);
+
         return [
             'categoryOptions' => $this->categoryOptions(),
             'selectedCategoryIds' => array_map(
@@ -214,6 +240,9 @@ class ProductController extends Controller
             'variantOptionRows' => old('variants', $product ? $this->variantOptionRows($product) : []),
             'initialVariants' => $this->initialVariants($product),
             'mainVariantKey' => old('main_variant_key', $product?->variants->firstWhere('is_main', true)?->combination_key),
+            'specificationAttributes' => $specificationAttributes,
+            'selectedAttributeValueIds' => $selectedAttributeValueIds,
+            'sizeCharts' => $sizeCharts,
         ];
     }
 
@@ -456,6 +485,19 @@ class ProductController extends Controller
             ],
             'main_variant_key' => ['exclude_unless:has_variants,1', 'required', 'string'],
 
+            // Attributes & size chart
+            'product_attributes' => ['nullable', 'array'],
+            'product_attributes.*' => ['array'],
+            'product_attributes.*.*' => ['integer', 'distinct', Rule::exists('variant_values', 'id')],
+            'size_chart_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('size_charts', 'id')->where(
+                    fn ($query) => $query->where('status', SizeChart::STATUS_ACTIVE)
+                        ->when($product?->size_chart_id, fn ($query, $currentId) => $query->orWhere('id', $currentId))
+                ),
+            ],
+
             // Shipping
             'weight' => ['required', 'numeric', 'gt:0', 'max:99999.999'],
             'length' => ['nullable', 'required_with:breadth,height', 'numeric', 'gt:0', 'max:999999.99'],
@@ -546,6 +588,7 @@ class ProductController extends Controller
             }
 
             $this->validateImageCount($validator, $request);
+            $this->validateProductAttributes($validator, $request);
 
             if ($hasVariants) {
                 $this->validateVariantCombinations($validator, $request, $enabledVariants);
@@ -554,6 +597,39 @@ class ProductController extends Controller
         });
 
         return $validator->validate();
+    }
+
+    /**
+     * Specification values must belong to the attribute they are submitted under,
+     * and that attribute must not be a variant attribute.
+     */
+    private function validateProductAttributes(ValidationValidator $validator, Request $request): void
+    {
+        $submitted = collect((array) $request->input('product_attributes', []))
+            ->map(fn ($valueIds) => array_map('intval', (array) $valueIds));
+
+        if ($submitted->flatten()->isEmpty()) {
+            return;
+        }
+
+        $valueTypeIds = VariantValue::query()->whereIn('id', $submitted->flatten()->all())->pluck('variant_type_id', 'id');
+        $specificationIds = VariantType::query()->where('used_for_variants', false)->pluck('id')->all();
+
+        foreach ($submitted as $attributeId => $valueIds) {
+            if (! in_array((int) $attributeId, $specificationIds, true)) {
+                $validator->errors()->add('product_attributes', 'Only attributes not used for variants can be set as product specifications.');
+
+                return;
+            }
+
+            foreach ($valueIds as $valueId) {
+                if ((int) ($valueTypeIds[$valueId] ?? 0) !== (int) $attributeId) {
+                    $validator->errors()->add("product_attributes.{$attributeId}", 'A selected attribute value does not belong to its attribute.');
+
+                    return;
+                }
+            }
+        }
     }
 
     /**
@@ -582,6 +658,12 @@ class ProductController extends Controller
             ->whereIn('id', $combinations->flatten()->unique()->all())
             ->pluck('variant_type_id', 'id');
 
+        $variantAttributeIds = VariantType::query()
+            ->where('used_for_variants', true)
+            ->whereIn('id', $combinations->flatMap(fn (array $pairs) => array_keys($pairs))->unique()->all())
+            ->pluck('id')
+            ->all();
+
         $typeSignatures = collect();
 
         foreach ($combinations as $pairs) {
@@ -594,6 +676,12 @@ class ProductController extends Controller
             }
 
             foreach ($pairs as $typeId => $valueId) {
+                if (! in_array($typeId, $variantAttributeIds, true)) {
+                    $validator->errors()->add('product_variants', 'Only attributes marked "Used for variants" can build variants.');
+
+                    return;
+                }
+
                 if ((int) ($valueTypeIds[$valueId] ?? 0) !== $typeId) {
                     $validator->errors()->add('product_variants', 'One or more variant values are invalid. Please regenerate the variants.');
 
@@ -717,6 +805,7 @@ class ProductController extends Controller
             'height' => $validated['height'] ?? null,
             'shipping_class_id' => $validated['shipping_class_id'] ?? null,
             'shipping_package_id' => $validated['shipping_package_id'] ?? null,
+            'size_chart_id' => $validated['size_chart_id'] ?? null,
             'free_shipping' => $request->boolean('free_shipping'),
             'cod_available' => $request->boolean('cod_available'),
             'shipping_days' => $validated['shipping_days'] ?? null,
@@ -747,8 +836,27 @@ class ProductController extends Controller
     private function syncRelations(Product $product, Request $request, array $validated): void
     {
         $product->categories()->sync($validated['category_ids']);
+        $this->syncAttributeValues($product, $validated['product_attributes'] ?? []);
         $this->syncImages($product, $request, $validated);
         $this->syncVariants($product, $validated);
+    }
+
+    /**
+     * Save specification values (e.g. Fabric: Cotton) keyed by value id with their attribute.
+     *
+     * @param  array<int|string, array<int, int|string>>  $productAttributes
+     */
+    private function syncAttributeValues(Product $product, array $productAttributes): void
+    {
+        $attributeValues = [];
+
+        foreach ($productAttributes as $attributeId => $valueIds) {
+            foreach ($valueIds as $valueId) {
+                $attributeValues[(int) $valueId] = ['variant_type_id' => (int) $attributeId];
+            }
+        }
+
+        $product->attributeValues()->sync($attributeValues);
     }
 
     /**

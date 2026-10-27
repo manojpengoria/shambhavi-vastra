@@ -109,9 +109,14 @@ class AdminRolePermissionSeeder extends Seeder
             // 'shipping-classes.delete',
             // 'shipping-settings.view',
             // 'shipping-settings.edit',
+            // Size Charts
+            'size-charts.view',
+            'size-charts.create',
+            'size-charts.edit',
+            'size-charts.delete',
             // Payment Options
-            'payment-options.view',
-            'payment-options.edit',
+            // 'payment-options.view',
+            // 'payment-options.edit',
         ];
 
         foreach ($permissions as $permissionName) {

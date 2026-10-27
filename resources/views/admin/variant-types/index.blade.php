@@ -6,8 +6,8 @@
     <div class="page-head">
         <!-- BEGIN PAGE TITLE -->
         <div class="page-title">
-            <h1>Variant Types</h1>
-            <small>Manage product variant types.</small>
+            <h1>Attributes</h1>
+            <small>Manage product attributes.</small>
         </div>
         <!-- END PAGE TITLE -->
     </div>
@@ -19,7 +19,7 @@
             <i class="fa fa-circle"></i>
         </li>
         <li>
-            <a href="{{ route('admin.variant-type.index') }}">Variant Type</a>
+            <a href="{{ route('admin.variant-type.index') }}">Attribute</a>
         </li>
     </ul>
     <!-- END PAGE BREADCRUMB -->
@@ -31,12 +31,12 @@
             <div class="portlet box blue-madison">
                 <div class="portlet-title">
                     <div class="caption">
-                        <i class="fa fa-cogs"></i>Variant Type List
+                        <i class="fa fa-cogs"></i>Attribute List
                     </div>
                     <!-- @can('categories.create') -->
                     <div class="actions">
                         <a href="{{ route('admin.variant-type.create') }}" class="btn btn-warning btn-md pointer">
-                        <i class="fa fa-plus"></i> Add New Variant Type</a>
+                        <i class="fa fa-plus"></i> Add New Attribute</a>
                     </div>
                     <!-- @endcan -->
                 </div>
@@ -58,9 +58,10 @@
                     <thead>
                     <tr>
                         <th>#</th>
-                        <th>Variant Type</th>
+                        <th>Attribute</th>
                         <th>Slug</th>
                         <th>Values</th>
+                        <th>Used for variants</th>
                         <th>Status</th>
                         <th>Sort Order</th>
                         <th class="text-end">Actions</th>
@@ -76,6 +77,13 @@
                                     <a href="{{ route('admin.variant-values.index', ['variant_type_id' => $type->id]) }}">
                                         {{ $type->values_count }} Values
                                     </a>
+                                </td>
+                                <td>
+                                    @if ($type->used_for_variants)
+                                        <span class="badge bg-success">Yes</span>
+                                    @else
+                                        <span class="badge bg-secondary">No</span>
+                                    @endif
                                 </td>
                                 <td>
                                     @if ($type->status === 707)
@@ -100,7 +108,7 @@
                                         <form action="{{ route('admin.variant-type.destroy', $type) }}" method="POST" class="d-inline" style="display: inline-block;">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-icon-only red" onclick="return confirm('Are you sure you want to delete this variant type?')">
+                                            <button type="submit" class="btn btn-icon-only red" onclick="return confirm('Are you sure you want to delete this attribute?')">
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </form>
@@ -110,7 +118,7 @@
                         @empty
                             <tr>
                                 <td colspan="8" class="text-center py-5 text-muted">
-                                    No variant types found.
+                                    No attributes found.
                                 </td>
                             </tr>
                         @endforelse

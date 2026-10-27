@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ShippingClass;
 use App\Models\ShippingPackage;
+use App\Models\SizeChart;
 use App\Models\VariantType;
 use App\Models\VariantValue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -59,6 +60,7 @@ class ProductControllerTest extends TestCase
         $colorType = VariantType::create([
             'variant_type_name' => 'Color',
             'slug' => 'product-test-color',
+            'used_for_variants' => true,
             'status' => 707,
             'sort_order' => 1,
         ]);
@@ -226,8 +228,8 @@ class ProductControllerTest extends TestCase
      */
     private function sizeAndColorValues(): array
     {
-        $color = VariantType::create(['variant_type_name' => 'Color', 'slug' => 'color', 'status' => 707, 'sort_order' => 1]);
-        $size = VariantType::create(['variant_type_name' => 'Size', 'slug' => 'size', 'status' => 707, 'sort_order' => 2]);
+        $color = VariantType::create(['variant_type_name' => 'Color', 'slug' => 'color', 'used_for_variants' => true, 'status' => 707, 'sort_order' => 1]);
+        $size = VariantType::create(['variant_type_name' => 'Size', 'slug' => 'size', 'used_for_variants' => true, 'status' => 707, 'sort_order' => 2]);
 
         return [
             VariantValue::create(['variant_type_id' => $color->id, 'variant_value_name' => 'Red', 'slug' => 'red', 'status' => 707, 'sort_order' => 1]),
@@ -708,5 +710,91 @@ class ProductControllerTest extends TestCase
                 'main_variant_key' => $this->key($red, $medium),
             ]))
             ->assertSessionHasErrors('enabled_product_variants.0.image_slot');
+    }
+
+    public function test_product_saves_specification_attributes_and_size_chart(): void
+    {
+        Storage::fake('public');
+        $category = $this->category();
+        [$red, $medium] = $this->sizeAndColorValues();
+        $fabric = VariantType::create(['variant_type_name' => 'Fabric', 'slug' => 'fabric', 'used_for_variants' => false, 'status' => 707, 'sort_order' => 3]);
+        $cotton = VariantValue::create(['variant_type_id' => $fabric->id, 'variant_value_name' => 'Cotton', 'slug' => 'cotton', 'status' => 707, 'sort_order' => 1]);
+        $silk = VariantValue::create(['variant_type_id' => $fabric->id, 'variant_value_name' => 'Silk', 'slug' => 'silk', 'status' => 707, 'sort_order' => 2]);
+        $sizeChart = SizeChart::create([
+            'name' => 'Women Kurti',
+            'unit' => 'inch',
+            'columns' => ['Size', 'Bust'],
+            'rows' => [['S', '34'], ['M', '36']],
+        ]);
+        $admin = $this->productManager();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.products.create'))
+            ->assertOk()
+            ->assertSee('Attributes &amp; Size Chart', false)
+            ->assertSee('name="product_attributes['.$fabric->id.'][]"', false)
+            ->assertSee('Women Kurti (Inches)')
+            ->assertSee('>Color</option>', false)
+            ->assertDontSee('>Fabric</option>', false);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.products.store'), $this->productPayload($category, [
+                'product_attributes' => [$fabric->id => [$cotton->id, $silk->id]],
+                'size_chart_id' => $sizeChart->id,
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $product = Product::with('attributeValues')->firstOrFail();
+
+        $this->assertSame($sizeChart->id, $product->size_chart_id);
+        $this->assertEqualsCanonicalizing([$cotton->id, $silk->id], $product->attributeValues->pluck('id')->all());
+        $this->assertSame([$fabric->id], $product->attributeValues->pluck('pivot.variant_type_id')->unique()->values()->all());
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.products.edit', $product))
+            ->assertOk()
+            ->assertSee('<option value="'.$sizeChart->id.'" selected>', false)
+            ->assertSee('<option value="'.$cotton->id.'" selected>', false);
+
+        // Variant attributes cannot be specifications, values must belong to their attribute, and specs cannot build variants.
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.products.update', $product), $this->productPayload($category, [
+                'existing_image_ids' => $product->images()->pluck('id', 'sort_order')->all(),
+                'product_images' => [],
+                'product_attributes' => [$red->variant_type_id => [$red->id]],
+            ]))
+            ->assertSessionHasErrors('product_attributes');
+
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.products.update', $product), $this->productPayload($category, [
+                'existing_image_ids' => $product->images()->pluck('id', 'sort_order')->all(),
+                'product_images' => [],
+                'product_attributes' => [$fabric->id => [$medium->id]],
+            ]))
+            ->assertSessionHasErrors("product_attributes.{$fabric->id}");
+
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.products.update', $product), $this->productPayload($category, [
+                'existing_image_ids' => $product->images()->pluck('id', 'sort_order')->all(),
+                'product_images' => [],
+                'has_variants' => '1',
+                'track_inventory' => '0',
+                'product_variants' => [
+                    ['enabled' => '1', 'key' => "{$fabric->id}:{$cotton->id}", 'product_price' => '2500'],
+                ],
+                'main_variant_key' => "{$fabric->id}:{$cotton->id}",
+            ]))
+            ->assertSessionHasErrors('product_variants');
+
+        $this->actingAs($admin, 'admin')
+            ->put(route('admin.products.update', $product), $this->productPayload($category, [
+                'existing_image_ids' => $product->images()->pluck('id', 'sort_order')->all(),
+                'product_images' => [],
+                'size_chart_id' => '',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertNull($product->fresh()->size_chart_id);
+        $this->assertSame(0, $product->attributeValues()->count());
     }
 }
